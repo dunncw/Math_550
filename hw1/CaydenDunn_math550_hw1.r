@@ -83,8 +83,9 @@ beta_1_t <- (beta_1_hat - beta_1) / beta_1_se # t-statistic
 beta_1_p <- 2 * pt(abs(beta_1_t), nrow(invoices) - 2, lower.tail = FALSE) # p-value
 kable(data.frame(beta_1, beta_1_hat, beta_1_se, beta_1_t, beta_1_p)) # print the results
 
-# can you walk me through this one? i want to understand how to interpret the results
-# would you fail to reject the null hypothesis cuz t is too large, t = 1.57, p = 0.12
+# reject the null hypothesis t = 1.57, p = 0.12
+# if p value is low null hypo must go(be rejected) uf p value is large null hypo is accepted (im not sure if this is right)(dont know how to intepert tvalues and pvalues)
+#interperate p values - range from 0-1(closer to 0 the more likley reject the null hypothesis)(but how small does it have to be)
 
 # c 
 
