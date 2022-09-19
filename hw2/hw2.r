@@ -14,7 +14,8 @@ slr
 library(caret)
 feature_engineered_dd <- diamond_data
 feature_engineered_dd$Size <- (feature_engineered_dd$Size)
-feature_engineered_dd$Price <- preProcess(feature_engineered_dd$Price, method = c('range'))
+range01 <- function(x){(x-min(x))/(max(x)-min(x))}
+feature_engineered_dd$Price <- range01(feature_engineered_dd$Price)
 
 slr = lm(Price~., data=feature_engineered_dd)
 summary(slr)
