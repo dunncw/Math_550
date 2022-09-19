@@ -1,0 +1,12 @@
+chegg link:
+https://www.chegg.com/homework-help/questions-and-answers/106-3-diagnostics-transformations-simple-linear-regression-4-tryfos-1998-p-57-considers-re-q31189134?trackid=6cc3ce32d959&strackid=bc23bb8bbe5b
+
+a. From the graph 3.42 it can be analyse the linear regression is not fit well to given data. After tonnage 10000 there is not a good fitting line . In graph 3.43 Gaussian density estimate is also showing that the model (3.8) is not fit well.
+
+b. The interval is valid to calculate a prediction interval for time in the model (3.8)From the graph it is appearing that there are few data values for tonnage 10000 and after that which are not on the fitted line. So interval upto 10000 will predict the time well in this fitted model.
+
+Model (3.9)
+
+a.) Yes model (3.9) is improvement over model (3.8) for predicting time. Graph (3.44) and(3.45) are showing that model (3.9) is fitted well to given data. The all data points are fitted well to the line. there is no outliers seems.So it will predict time better than model (3.8).
+
+b) The value of R square and adjusted R square is decrease in model (3.9) which could be said a weakness of this model. But there is not a big difference between these values so model (3.9) is better than Model (3.8).

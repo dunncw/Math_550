@@ -1,0 +1,65 @@
+chegg link:
+https://www.chegg.com/homework-help/questions-and-answers/chu-1996-discusses-development-regression-model-predict-price-diamond-rings-size-diamond-s-q58203326
+
+Solution:
+
+Part 1. (a) Taking Size as the predictor variable and Price is the dependent variable, predicting Price using linear regression model in R and pasting the results below:
+
+diamond_data <- read.csv("diamonds.csv")
+
+lm_model = lm(Price~., data=diamond_data)
+summary(lm_model)
+
+
+Call:
+lm(formula = Price ~ ., data = diamond_data)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-85.654 -21.503  -1.203  16.797  79.295 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  -258.05      16.94  -15.23   <2e-16 ***
+Size         3715.02      80.41   46.20   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 31.6 on 47 degrees of freedom
+Multiple R-squared:  0.9785,	Adjusted R-squared:  0.978 
+F-statistic:  2135 on 1 and 47 DF,  p-value: < 2.2e-16
+We obtain the adjusted R2 value as 97.8%, and hence this model is perfect for predicting the price of diamonds using Size alone.
+
+(b) The weekness that I could find was the negative intercept which is unrealistic. Moreover the coefficient of SIze parameter is also unrealistic in explaining this model to business.
+
+Part 2. (a) Modifying the predicted variable Price by taking the sqrt of variable and then regression against independent variable:
+
+diamond_data <- read.csv("diamonds.csv")
+
+diamond_data$Size <- (diamond_data$Size)
+diamond_data$Price <- sqrt(diamond_data$Price)
+
+lm_model = lm(Price~., data=diamond_data)
+summary(lm_model)
+
+
+Call:
+lm(formula = Price ~ ., data = diamond_data)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-1.98882 -0.44362 -0.06248  0.45273  1.87691 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   5.8926     0.4029   14.63   <2e-16 ***
+Size         78.4663     1.9122   41.03   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.7515 on 47 degrees of freedom
+Multiple R-squared:  0.9728,	Adjusted R-squared:  0.9723 
+F-statistic:  1684 on 1 and 47 DF,  p-value: < 2.2e-16
+(b) As such I cant find any big flaw in this model as the interceot values and Size estimates are realistic now and explainable to business.
+
+Part 3. Model B provides a better readability and understanding and explainability of the model to business with all non-zero realistic values. Sqrt of price was done to reduce the variance in Price and hence the strategy was to get better output and acceptable coefficient for Size parameter. Here we got, Size estimate as 78.4663 which is far realistic than 3715 that we obtained in previous model. Moreover, Intercept was also completely unrealistic with a high negative value of -258. Now in the modified model, the Intercept value obtained is 5.89 which is far more relaistic and explainable. Moreover the overall R2 value also remained similar 97.3%. Hence, we are not losing on any information by introducing this model. Hence we are good to go with this model with transformed Price.
