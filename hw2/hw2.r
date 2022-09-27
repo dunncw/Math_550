@@ -16,6 +16,7 @@ abline(slr)
 
 # Part 1b
 
+<<<<<<< HEAD
 #plot the normality on the predictor of the response see if its normal or skewed
 layout(matrix(1:4,2,2))
 MS<-density(diamond_data$Size)
@@ -27,6 +28,14 @@ boxplot(diamond_data$Size,data=diamond_data, main="data",ylab="Max size")
 #according to the qqnorm plot, the data is right skewed and has haeavy tails
 #according to the boxplot, the data is majority smaller sizes with few large size observations
 #nomality plot not close to the line
+=======
+# Part 2a
+library(caret)
+feature_engineered_dd <- diamond_data
+feature_engineered_dd$Size <- (feature_engineered_dd$Size)
+range01 <- function(x){(x-min(x))/(max(x)-min(x))}
+feature_engineered_dd$Price <- range01(feature_engineered_dd$Price)
+>>>>>>> 4d0a89f12e6a74c1453c6b495fd949da78d9fead
 
 #look at the normality for the predictor 
 layout(matrix(1:4,2,2))
