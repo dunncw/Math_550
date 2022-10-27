@@ -6,4 +6,5 @@ attach(overdue_df)
 
 #q1
 mlr <- lm(LATE~., data=overdue_df)
+summary(mlr)
 
