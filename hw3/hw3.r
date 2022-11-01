@@ -5,6 +5,6 @@ overdue_df$type <- as.factor(overdue_df$type) # convert type to a factor
 attach(overdue_df)
 
 #q1
-mlr <- lm(LATE~., data=overdue_df)
+mlr <- lm(LATE~BILL+type+BILL*type, data=overdue_df) # you need a third term called interaction term that is the interaction between continuous data and categorical data
 summary(mlr)
 
