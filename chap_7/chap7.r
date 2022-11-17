@@ -32,11 +32,11 @@ summary(lm3)
 # from this we can see that we dont need logc in the model with 3 predictors as its p value is not significant and the adjusted r squared is around the same for both models.
 
 #AIC,BIC, AICc calculation by definition
-p<-c(1,2,3,4,5)
+p<-c(1,2,3,4,5) # num of predictors
 v<-45*log(reg.summary$rss/45,base=exp(1))
 aic<-v+45+45*log(2*pi, base=exp(1)) +2*(p+2)
 bic<-v+45+45*log(2*pi, base=exp(1))+(p+2)*log(45, base=exp(1))
-aicc<-aic+2*(p+2)*(p+3)/(45-p-1)
+aicc<-aic+2*(p+2)*(p+3)/(45-p-1) # keep the contants just need to define n and p n is number of observatoin
 
 aic
 bic

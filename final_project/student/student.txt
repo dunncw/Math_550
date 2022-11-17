@@ -38,3 +38,6 @@
 Additional note: there are several (382) students that belong to both datasets . 
 These students can be identified by searching for identical attributes
 that characterize each student, as shown in the annexed R file.
+
+# where i got this data set from:
+https://archive.ics.uci.edu/ml/datasets/student+performance
