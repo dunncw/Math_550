@@ -20,6 +20,8 @@ rm(portuguese_course)
 # remove the column "G1" and "G2" from the dataset
 student_data = student_data[, -which(names(student_data) %in% c("G1"))]
 
+# for chapter 5 we handled data like this go compare. 
+
 # Create a naive baseline model to comapre too
 student_model = lm(G3~.,data=student_data)
 summary(student_model)
@@ -72,7 +74,7 @@ boxplot(G3~higher, data=student_data)
 
 #define a function called aicc to calculate the AICc
 aicc_func <- function(model,p){
-  AIC(model)+2*(p+2)*(p+3)/(nrow(pga_data)-p-1)
+  AIC(model)+2*(p+2)*(p+3)/(nrow(student_data)-p-1)
 }
 
 # forward selection
@@ -81,20 +83,52 @@ library(leaps)
 nullmod<-lm(G3~1,data=student_data)
 fullmod<-lm(G3~.,data=student_data)
 
-forward_step<-step(nullmod,scope=list(lower=nullmod, upper=fullmod), direction="forward")
-summary(forward_step)
+forward_AIC_step<-step(nullmod,scope=list(lower=nullmod, upper=fullmod), direction="forward")
+Summary(forward_AIC_step)
+AIC(forward_AIC_step)
+aicc_func(forward_AIC_step, ncol(forward_AIC_step)-1)
+BIC(forward_AIC_step)
 
-AIC(forward_step)
-BIC(forward_step)
-aicc_func(forward_step, length(forward_step$coefficients))
+forward_BIC_step<-step(nullmod,scope=list(lower=nullmod, upper=fullmod), direction="forward", k=log(nrow(student_data)))
+Summary(forward_BIC_step)
+AIC(forward_BIC_step)
+aicc_func(forward_BIC_step, ncol(forward_BIC_step)-1)
+BIC(forward_BIC_step)
 
 # backward selection
-backwardsstep_model <- step(student_model)
-summary(backwardsstep_model)
+Backwards_aic_model <- step(student_model)
+summary(Backwards_aic_model)
+AIC(Backwards_aic_model)
+aicc_func(Backwards_aic_model, ncol(Backwards_aic_model)-1)
+BIC(Backwards_aic_model)
 
-AIC(backwardsstep_model)
-BIC(backwardsstep_model)
-aicc_func(backwardsstep_model, length(backwardsstep_model$coefficients))
+Backwards_bic_model <- step(student_model, k=log(nrow(student_data)))
+summary(Backwards_bic_model)
+AIC(Backwards_bic_model)
+aicc_func(Backwards_bic_model, ncol(Backwards_bic_model)-1)
+BIC(Backwards_bic_model)
+
+# create a table of the models and their metrics
+# creeat a vector of the models
+models = c("forward_AIC_step","forward_BIC_step","Backwards_aic_model","Backwards_bic_model")
+# create a vector of the AICs
+AICs = c(AIC(forward_AIC_step),AIC(forward_BIC_step),AIC(Backwards_aic_model),AIC(Backwards_bic_model))
+# create a vector of the BICs
+BICs = c(BIC(forward_AIC_step),BIC(forward_BIC_step),BIC(Backwards_aic_model),BIC(Backwards_bic_model))
+# create the vector of the adj R^2s
+adj_R2s = c(summary(forward_AIC_step)$adj.r.squared,summary(forward_BIC_step)$adj.r.squared,summary(Backwards_aic_model)$adj.r.squared,summary(Backwards_bic_model)$adj.r.squared)
+#create the data frame
+model_metrics = data.frame(models,AICs,BICs,adj_R2s)
+
+summary(forward_AIC_step)
+summary(Backwards_aic_model)
+
+summary(forward_BIC_step)
+summary(Backwards_bic_model)
+
+
+
+
 
 # stepwise selection
 #import libraries
@@ -124,12 +158,64 @@ which.max(reg.summary$adjr2)
 which.min(reg.summary$cp)
 which.min(reg.summary$bic)
 
-#  for best subset selection grab the predictors from model with 8 predictors in the object "coef(regfit.full, 8)" 
-coef(regfit.full, 8)
-# build a model with these predictors
-best_subset_model = lm(G3~Fjob+traveltime+failures+famsup+paid+famrel+absences+G2, data=student_data)
-summary(best_subset_model)
+#build all subset models from 4 - 12 predictors and compare the metrics
+# build best subset model with 4 predictors
+coef(regfit.full, 4)
+best_subset_4_model <- lm(G3 ~ failures+paid+absences+G2, data = student_data)
 
-AIC(best_subset_model)
-BIC(best_subset_model)
-aicc_func(best_subset_model, length(best_subset_model$coefficients))
+# build best subset model with 5 predictors
+coef(regfit.full, 5)
+best_subset_5_model <- lm(G3 ~ traveltime+failures+paid+absences+G2, data = student_data)
+
+# build best subset model with 6 predictors
+coef(regfit.full, 6)
+best_subset_6_model <- lm(G3 ~ traveltime+failures+paid+absences+G2+famsup, data = student_data)
+
+# build best subset model with 7 predictors
+coef(regfit.full, 7)
+best_subset_7_model <- lm(G3 ~ traveltime+failures+paid+absences+G2+famsup+Fjob, data = student_data)
+
+# build best subset model with 8 predictors
+best_subset_8_model = lm(G3~Fjob+traveltime+failures+famsup+paid+famrel+absences+G2, data=student_data)
+
+# build best subset model with 9 predictors
+coef(regfit.full, 9)
+best_subset_9_model = lm(G3~Fjob+traveltime+failures+famsup+paid+famrel+absences+G2+Mjob, data=student_data)
+
+# build best subset model with 10 predictors
+coef(regfit.full, 10)
+best_subset_10_model = lm(G3~Fjob+traveltime+failures+famsup+paid+famrel+absences+G2+Mjob+activities, data=student_data)
+
+# build best subset model with 11 predictors
+coef(regfit.full, 11)
+best_subset_11_model = lm(G3~Fjob+traveltime+failures+famsup+paid+famrel+absences+G2+Mjob+activities+Pstatus, data=student_data)
+
+# build the best subset model with 12 predictors
+coef(regfit.full, 12)
+best_subset_12_model <- lm(G3 ~ Pstatus+Mjob+Fjob+Fjob+traveltime+failures+famsup+paid+activities+famrel+absences+G2 , data = student_data)
+
+
+#####
+#this is wrong currently but this is what i want to do
+# create a table with each modesl and its AIC, AICc, BIC, and adjR2
+p <- c(4,5,6,7,8,9,10,11,12)
+best_subset_models <- list(best_subset_4_model, best_subset_5_model, best_subset_6_model, best_subset_7_model, best_subset_8_model, best_subset_9_model, best_subset_10_model, best_subset_11_model, best_subset_12_model)
+best_subset_models_adjR2 <- sapply(best_subset_models, function(x) summary(x)$adj.r.squared)
+best_subset_models_names <- c("best_subset_4_model", "best_subset_5_model", "best_subset_6_model", "best_subset_7_model", "best_subset_8_model", "best_subset_9_model", "best_subset_10_model", "best_subset_11_model", "best_subset_12_model")
+best_subset_models_AIC <- sapply(best_subset_models, AIC)
+#calculate AICc for each model
+best_subset_models_AICc <- best_subset_models_AIC + (2*p*(p+1))/(nrow(student_data)-p-1)
+
+best_subset_models_BIC <- sapply(best_subset_models, BIC)
+
+# make a data frame and name the columns 
+best_subset_models_df <- data.frame(best_subset_models_names, best_subset_models_AIC, best_subset_models_AICc, best_subset_models_BIC, best_subset_models_adjR2)
+# rename the columns
+colnames(best_subset_models_df) <- c("Model", "AIC", "AICc", "BIC", "adjR2")
+
+# find the row in the data frame with the highest adjR2 as well as the lowest AIC, AICc, and BIC
+best_subset_models_df[which.max(best_subset_models_df$adjR2),]
+best_subset_models_df[which.min(best_subset_models_df$AIC),]
+best_subset_models_df[which.min(best_subset_models_df$AICc),]
+best_subset_models_df[which.min(best_subset_models_df$BIC),]
+

@@ -1,5 +1,5 @@
 ---
-title: "Math 550 Final Project"
+title: "Linear Models Final Project"
 author: "Cayden dunn, Naomi Woodbury"
 date: "2022-11-17"
 output: html_document
@@ -16,7 +16,7 @@ output: html_document
 7. [References](#references)<br>
 
 # Introduction
-(cwd)<br>
+
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As Finals season approaches and the semester winds down to and end what subject is more meta than final grades. Our team choose to build a model that could accurately predict grades based on a set of possible predictors. 
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Our Data set included 1044 Students across two Portuguese schools. The data set contains attributes for each students grades, demographic, social and school related features. Each observation can be pulled from one of two distinct subjects: Mathematics (mat) and Portuguese language (por)(Note 382 of these students overlap as they take both classes). The objective of this model will be to accurately predict G3(final grade (numeric: from 0 to 20, output target)). Note a full manifest can be see at the bottom of this document in the data manifest section([jump to](#data-manifest)). 
@@ -26,6 +26,191 @@ output: html_document
 
 # Data analysis-numerical and graphical results and your interpretations of the results 
 (both - write about your respective portion of the project) <br>
+Several approaches will be conducted on the data to generate the best possible model. The approaches are as follows:<br>
+1. [Boxcox transformation](#boxcox-transformation)<br>
+2. [Inverse transformation](#inverse-transformation)<br>
+3. [Variable Selection](#variable-selection)<br>
+<br>
+
+## Boxcox transformation
+(nw)
+
+## Inverse transformation
+(nw)
+
+## Variable Selection
+
+### Forwards and Backwards Selection using AIC and BIC and ADJ $R^2$
+```{r, echo=FALSE}
+#set the working directory to the current directory 
+setwd('/Users/cindydunn/Desktop/Grad_School/Math_550')
+
+#print the working directory
+# getwd()
+#print everything in the working directory
+# list.files()
+
+# read in data from csv
+math_course =read.table("final_project/student/student-mat.csv",sep=";",header=TRUE)
+portuguese_course =read.table("final_project/student/student-por.csv",sep=";",header=TRUE)
+
+#combine the two data sets
+student_data = rbind(math_course,portuguese_course)
+
+#remove the datasets that are not needed
+rm(math_course)
+rm(portuguese_course)
+
+# remove the column "G1" and "G2" from the dataset
+student_data = student_data[, -which(names(student_data) %in% c("G1"))]
+
+# for chapter 5 we handled data like this go compare. 
+
+# Create a naive baseline model to comapre too
+student_model = lm(G3~.,data=student_data)
+
+#define a function called aicc to calculate the AICc
+aicc_func <- function(model,p){
+  AIC(model)+2*(p+2)*(p+3)/(nrow(student_data)-p-1)
+}
+
+# forward selection
+library(leaps)
+
+nullmod<-lm(G3~1,data=student_data)
+fullmod<-lm(G3~.,data=student_data)
+
+forward_AIC_step<-step(nullmod,scope=list(lower=nullmod, upper=fullmod), direction="forward",trace=0)
+forward_BIC_step<-step(nullmod,scope=list(lower=nullmod, upper=fullmod), direction="forward", k=log(nrow(student_data)),trace=0)
+
+Backwards_aic_model <- step(student_model,trace=0)
+Backwards_bic_model <- step(student_model, k=log(nrow(student_data)),trace=0)
+
+models = c("forward_AIC_step","forward_BIC_step","Backwards_aic_model","Backwards_bic_model")
+# create a vector of the AICs
+AICs = c(AIC(forward_AIC_step),AIC(forward_BIC_step),AIC(Backwards_aic_model),AIC(Backwards_bic_model))
+# create a vector of the BICs
+BICs = c(BIC(forward_AIC_step),BIC(forward_BIC_step),BIC(Backwards_aic_model),BIC(Backwards_bic_model))
+# create the vector of the adj R^2s
+adj_R2s = c(summary(forward_AIC_step)$adj.r.squared,summary(forward_BIC_step)$adj.r.squared,summary(Backwards_aic_model)$adj.r.squared,summary(Backwards_bic_model)$adj.r.squared)
+#create the data frame
+model_metrics = data.frame(models,AICs,BICs,adj_R2s)
+knitr::kable(model_metrics, format="markdown")
+
+summary(forward_AIC_step)
+```
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Interestingly enough the forward selection AIC model and the backwards selection AIC model convergeed on the same model with 6 parameters. Also the same convergence happened when these variable selection methods used BIC as there metric. This can be seen in the scroll able outputs below. <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Despite this the best model of the 4 is the model produced by forward and backward AIC selection as the convereged to the same model with the highest adj $R^2$. This model has 6 predictors. This is the best model of all the forward and backwards selection models. This model will be compared to the other best models from other sections of this report when choosing the final model. 
+<br>
+
+#### Forward Selection using AIC
+
+```{r, attr.output='style="max-height: 450px;"', echo=FALSE}
+forward_AIC_step<-step(nullmod,scope=list(lower=nullmod, upper=fullmod), direction="forward")
+```
+#### Backwards Selection using AIC
+```{r, attr.output='style="max-height: 450px;"', echo=FALSE}
+Backwards_aic_model <- step(student_model)
+```
+#### Forward Selection using BIC
+```{r, attr.output='style="max-height: 450px;"', echo=FALSE}
+forward_AIC_step<-step(nullmod,scope=list(lower=nullmod, upper=fullmod), direction="forward", k=log(nrow(student_data)))
+```
+#### Backwards Selection using BIC
+```{r, attr.output='style="max-height: 450px;"', echo=FALSE}
+Backwards_aic_model <- step(student_model, k=log(nrow(student_data)))
+```
+<br>
+
+### Best Subset 
+### Selection 
+
+
+<div style= "float:right;position: relative; top: -80px;">
+```{r, echo=FALSE}
+library(leaps)
+
+#(a) Identify the optimal model or models based on adj R2 , AIC, AIC , BIC from the approach based on all possible subsets.
+regfit.full = regsubsets(G3 ~ ., data = student_data, nvmax = 32)
+reg.summary = summary(regfit.full)
+par(mfrow=c(2,2))
+plot(reg.summary$rss ,xlab="Number of Predictors ",ylab="RSS",type="l")
+# mark the minimum
+points(which.min(reg.summary$rss),reg.summary$rss[which.min(reg.summary$rss)],col="red",cex=2,pch=20)
+plot(reg.summary$adjr2 ,xlab="Number of Predictors ", ylab="Adjusted RSq",type="l")
+# mark the maximum
+points(which.max(reg.summary$adjr2),reg.summary$adjr2[which.max(reg.summary$adjr2)],col="red",cex=2,pch=20)
+plot(reg.summary$cp ,xlab="Number of Predictors ",ylab="Cp", type='l')
+# mark the minimum
+points(which.min(reg.summary$cp),reg.summary$cp[which.min(reg.summary$cp)],col="red",cex=2,pch=20)
+plot(reg.summary$bic ,xlab="Number of Predictors ",ylab="BIC",type='l')
+# mark the minimum
+points(which.min(reg.summary$bic),reg.summary$bic[which.min(reg.summary$bic)],col="red",cex=2,pch=20)
+```
+</div>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As seen in the Charts and table below the best subset model is one of the models between 4-12 predictors. The model with 8 predictors has the highest adj r^2. The model with 4 predictors has the lowest BIC. The model with 6 predictors has the lowest AIC and AICc. These are the three models we will be compared in the next section to see which model is the best subset model.
+
+```{r, echo=FALSE}
+#build all subset models from 4 - 12 predictors and compare the metrics
+# build best subset model with 4 predictors
+best_subset_4_model <- lm(G3 ~ failures+paid+absences+G2, data = student_data)
+
+# build best subset model with 5 predictors
+best_subset_5_model <- lm(G3 ~ traveltime+failures+paid+absences+G2, data = student_data)
+
+# build best subset model with 6 predictors
+best_subset_6_model <- lm(G3 ~ traveltime+failures+paid+absences+G2+famsup, data = student_data)
+
+# build best subset model with 7 predictors
+best_subset_7_model <- lm(G3 ~ traveltime+failures+paid+absences+G2+famsup+Fjob, data = student_data)
+
+# build best subset model with 8 predictors
+best_subset_8_model = lm(G3~Fjob+traveltime+failures+famsup+paid+famrel+absences+G2, data=student_data)
+
+# build best subset model with 9 predictors
+best_subset_9_model = lm(G3~Fjob+traveltime+failures+famsup+paid+famrel+absences+G2+Mjob, data=student_data)
+
+# build best subset model with 10 predictors
+best_subset_10_model = lm(G3~Fjob+traveltime+failures+famsup+paid+famrel+absences+G2+Mjob+activities, data=student_data)
+
+# build best subset model with 11 predictors
+best_subset_11_model = lm(G3~Fjob+traveltime+failures+famsup+paid+famrel+absences+G2+Mjob+activities+Pstatus, data=student_data)
+
+# build the best subset model with 12 predictors
+best_subset_12_model <- lm(G3 ~ Pstatus+Mjob+Fjob+Fjob+traveltime+failures+famsup+paid+activities+famrel+absences+G2 , data = student_data)
+
+p <- c(4,5,6,7,8,9,10,11,12)
+best_subset_models <- list(best_subset_4_model, best_subset_5_model, best_subset_6_model, best_subset_7_model, best_subset_8_model, best_subset_9_model, best_subset_10_model, best_subset_11_model, best_subset_12_model)
+best_subset_models_adjR2 <- sapply(best_subset_models, function(x) summary(x)$adj.r.squared)
+best_subset_models_names <- c("best_subset_4_model", "best_subset_5_model", "best_subset_6_model", "best_subset_7_model", "best_subset_8_model", "best_subset_9_model", "best_subset_10_model", "best_subset_11_model", "best_subset_12_model")
+best_subset_models_AIC <- sapply(best_subset_models, AIC)
+#calculate AICc for each model
+best_subset_models_AICc <- best_subset_models_AIC + (2*p*(p+1))/(nrow(student_data)-p-1)
+
+best_subset_models_BIC <- sapply(best_subset_models, BIC)
+
+# make a data frame and name the columns 
+best_subset_models_df <- data.frame(best_subset_models_names, best_subset_models_AIC, best_subset_models_AICc, best_subset_models_BIC, best_subset_models_adjR2)
+colnames(best_subset_models_df) <- c("Model", "AIC", "AICc", "BIC", "adjR2")
+knitr::kable(best_subset_models_df, format="markdown")
+
+```
+
+#### Best Subset model with 4 Predictors 
+```{r,echo=FALSE}
+summary(best_subset_4_model)
+```
+#### Best Subset model with 6 Predictors 
+```{r,echo=FALSE}
+summary(best_subset_6_model)
+```
+#### Best Subset model with 8 Predictors 
+```{r,echo=FALSE}
+summary(best_subset_8_model)
+```
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As seen above the model with 6 and 8 predictors have around the same adj $R^2$ value of 0.8346 and 0.8349 respectivly. The best subset model with 6 predictors is a nested model of the best subset model with 8 predictors. As seen above the extra predictors in the model with 8 predictors have insignificant p-values and do not provide anything to the model. Therefore the model with 6 predictors will be chose over the model with 8 predictors to reduce complexity of the model while maintaining performance. <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As seen above the model with 4 and 6 predictors have around the same adj $R^2$ value of 0.8338 and 0.8346 respectivly. The best subset model with 4 predictors is a nested model of the best subset model with 6 predictors. As seen above the extra predictors in the model with 6 predictors have insignificant p-values and do not provide anything to the model. Therefore the model with 4 predictors will be chose over the model with 8 predictors to reduce complexity of the model while maintaining performance. This is the best subset selection model out of all the subset selection models. This model will be compared to the other best models from other sections of this report when choosing the final model. 
+<br>
 
 # Critics-pros and cons of the model chosen 
 (both) <br>

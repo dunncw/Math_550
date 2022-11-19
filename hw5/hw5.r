@@ -11,17 +11,19 @@ pga_data <- pga_data[, -1]
 # remove column 2
 pga_data <- pga_data[, -2]
 # remove the second to last column
-pga_data <- pga_data[, -7]
+pga_data <- pga_data[, -8]
+
+# apply log transformation to the data in the column 'PrizeMoney'
+pga_data$PrizeMoney <- log(pga_data$PrizeMoney)
 
 #import libraries
 library(leaps)
 
 
-#(a) Identify the optimal model or models based on adj R2 , AIC, AIC , BIC from the approach based on all possible subsets.
+#(a) Identify the optimal model or models based on adj R2 , AIC, AICc , BIC from the approach based on all possible subsets.
 regfit.full = regsubsets(PrizeMoney ~ ., data = pga_data, nvmax = 19)
 reg.summary = summary(regfit.full)
 reg.summary
-coef(regfit.full, 1:7)
 
 par(mfrow=c(2,2))
 plot(reg.summary$rss ,xlab="Number of Predictors ",ylab="RSS",type="l")
@@ -34,37 +36,36 @@ aicc_func <- function(model,p){
   AIC(model)+2*(p+2)*(p+3)/(nrow(pga_data)-p-1)
 }
 
-# model with 3 predictors we should use according to reg.summary
-lm3<-lm(PrizeMoney~GIR+BirdieConversion+SandSaves,data=pga_data)
+lm3<-lm(PrizeMoney~Scrambling+GIR+BirdieConversion,data=pga_data)
 summary(lm3)
 AIC(lm3)
 BIC(lm3)
-aicc_func(lm3,3)
+aicc_func(lm3,5)
 
 # model with 5 predictors we should use according to reg.summary
-lm5<-lm(PrizeMoney~DrivingAccuracy+PuttsPerRound+GIR+BirdieConversion+SandSaves,data=pga_data)
+lm5<-lm(PrizeMoney~Scrambling+PuttsPerRound+GIR+BirdieConversion+SandSaves,data=pga_data)
 summary(lm5)
 AIC(lm5)
 BIC(lm5)
 aicc_func(lm5,5)
 
+# the optimal model is the one with 3 predictors
+
 # (b) Identify the optimal model or models based on AIC and BIC from the
 # approach based on backward selection.
 
-# fullmodb <- lm(PrizeMoney~1, data=pga_data)
-# nullmodb <- lm(PrizeMoney~.,data=pga_data)
-# reg1b<-step(nullmodb,scope=list(lower=fullmodb,upper=nullmodb), direction ="backward")
-# #or
-
 backwards_step_model <- step(lm(PrizeMoney ~ ., data = pga_data), direction = "backward")
 summary(backwards_step_model)
-#calculate the AIC and BIC for the model
-# or
 AIC(backwards_step_model)
 BIC(backwards_step_model)
-aicc_func(backwards_step_model,length(backwards_step_model$coefficients))
 
-##### do I need aic for backwards and forwards model 
+backwards_bic_model <- step(lm(PrizeMoney ~ ., data = pga_data), direction = "backward", k=log(nrow(pga_data)))
+summary(backwards_bic_model)
+#calculate the AIC and BIC for the model
+AIC(backwards_bic_model)
+BIC(backwards_bic_model)
+
+# the optimal model is bic_model
 
 # (c) Identify the optimal model or models based on AIC and BIC from the
 # approach based on forward selection.
@@ -73,10 +74,15 @@ fullmod<-lm(PrizeMoney~.,data=pga_data)
 
 reg1A<-step(nullmod,scope=list(lower=nullmod, upper=fullmod), direction="forward")
 summary(reg1A)
-#calculate the AIC and BIC for the model
 AIC(reg1A)
 BIC(reg1A)
-aicc_func(reg1A,length(reg1A$coefficients))
+
+forwards_bic_model <- step(nullmod,scope=list(lower=nullmod, upper=fullmod), direction="forward", k=log(nrow(pga_data)))
+summary(forwards_bic_model)
+AIC(forwards_bic_model)
+BIC(forwards_bic_model)
+
+# the optimal model is AIC_model 'reg1A'
 
 # (d) Carefully explain why the models chosen in (a) & (c) are not the same while
 # those in (a) and (b) are the same.
@@ -90,33 +96,30 @@ aicc_func(reg1A,length(reg1A$coefficients))
 # this has the possibility of alinging with best subset selection as it is possible to remove predictors and end up with the same model as best subset selection. but it is not garunteed.
 # backwards selection is not garunteed to find the same model as best subset selection because it is possible to remove predictors and end up with a worse model than the best subset selection model.
 
+# a and b are same
+summary(lm3)
+summary(backwards_bic_model)
+
+# c id different than a and b
+summary(reg1A)
+
 # (e) Recommend a final model. Give detailed reasons to support your choice.
 
-#create a dataframe with each model name and its AIC and BIC
-model_names <- data.frame(
-    model_name = c('lm3', 'lm5', "backwards_step_model", "reg1A"),
-    hw_part = c('a', 'a', 'b', 'c'),
-    aic = c( AIC(lm3), AIC(lm5), AIC(backwards_step_model), AIC(reg1A)), 
-    bic = c( BIC(lm3), BIC(lm5), BIC(backwards_step_model), BIC(reg1A)),
-    aicc = c(aicc_func(lm3,3), aicc_func(lm5,5), aicc_func(backwards_step_model,length(backwards_step_model$coefficients)),
-     aicc_func(reg1A,length(reg1A$coefficients))))
-model_names
-
-# the best model is the one with the lowest AICc value
-# according to the table above the best model is the lm5 model
-# this model has 5 predictors and the lowest AICc value
-# the lm5 model has the lowest AICc value and the lowest BIC value
-
-#######
-# what metric is king or is it just best prefoming model acrossed the board
-# what else should be said here
-# do my model metrics look correct i feel like i got something wrong because a and c are same and a and b are diffenret
+#give a summary of all models and compare them starting with highest number of predictors and working down
+summary(reg1A)
+reg1A$coefficients
+# as we can see the forwards aic model has 5 predictors
+summary(backwards_bic_model)
+backwards_bic_model$coefficients
+# the backwards BIC model(which is identical to bestsubset 3 predictors model) is a nest model of the forward aic model.
+# not that the preditors removed from the forwards aic model are not significant predictors. thus we can conclude that the backwards bic model is the best model(again its the same as best subset 3 predicotr model).
 
 # (f) Interpret the regression coefficients in the final model. Is it necessary to be
 # cautious about taking these results to literally?
 
-summary(lm5)
+summary(lm3)
 
 # according to the textbook we know that the p-values obtained after variable selection are much smaller than there true values before variable selsciton.
 # this means we have added a level of bais to our data and we should be cautious about taking the results to literally as they can be highly misleading.
 # the best way to prove this model would be to see how it preformes on a novel set of test data and see how well it predicts the prize money of said test data.
+
