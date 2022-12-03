@@ -16,15 +16,60 @@ student_data = rbind(math_course,portuguese_course)
 #remove the datasets that are not needed
 rm(math_course)
 rm(portuguese_course)
+# Scale response and predictors with zeros by 1
+student_data$G3=(student_data$G3 + 1)
+student_data$G2=(student_data$G2 + 1)
+student_data$G1=(student_data$G1 + 1)
+student_data$absences=(student_data$absences + 1)
+student_data$failures=(student_data$failures + 1)
+student_data$Medu=(student_data$Medu + 1)
+student_data$Fedu=(student_data$Fedu + 1)
 
-# remove the column "G1" and "G2" from the dataset
-student_data = student_data[, -which(names(student_data) %in% c("G1"))]
+# Initial model
+attach(student_data)
+ilm<-lm(G3 ~., data = student_data)
+summary(ilm)
+# plot 2 by 2
+par(mfrow=c(2,2))
+plot(ilm)
 
-# for chapter 5 we handled data like this go compare. 
+library(car)
+pc<-powerTransform(cbind(student_data$age, student_data$Medu, student_data$Fedu, student_data$traveltime, student_data$studytime, student_data$failures, student_data$famrel, student_data$freetime, student_data$goout, student_data$Dalc, student_data$Walc, student_data$health, student_data$absences,student_data$G1, student_data$G2, student_data$G3)~1)
+summary(pc)
 
-# Create a naive baseline model to comapre too
-student_model = lm(G3~.,data=student_data)
-summary(student_model)
+# Transform numeric predictors
+tage<-student_data$age^(-1)
+tFedu<-student_data$Fedu^(0.67)
+ttraveltime<-student_data$traveltime^(-1.66)
+tstudytime<-log(student_data$studytime)
+tfailures<-student_data$failures^(-6.22)
+tfamrel<-student_data$famrel^(2)
+tfreetime<-student_data$freetime^(1)
+tgoout<-student_data$goout^(1)
+tDalc<-student_data$Dalc^(-2.69)
+tWalc<-log(student_data$Walc)
+thealth<-student_data$health^(1.33)
+tabsences<-student_data$absences^(-0.09)
+tG1<-student_data$G1^(1.43)
+tG2<-student_data$G2^(1.82)
+tG3<-student_data$G3^(2)
+
+# Check model with transformed predictors and response
+tlm<-lm(tG3~school+sex+tage+address+famsize+Pstatus+Medu+Fedu+Mjob+Fjob+reason+guardian+ttraveltime+tstudytime+tfailures+schoolsup+famsup+paid+activities+nursery+higher+internet+romantic+tfamrel+tfreetime+tgoout+tDalc+tWalc+thealth+tabsences+tG1+tG2, data = student_data)
+abline(tlm)
+summary(tlm)
+plot(tlm)
+
+# Inverse response method using transformed predictors
+transy<-lm(G3~school+sex+tage+address+famsize+Pstatus+Medu+Fedu+Mjob+Fjob+reason+guardian+ttraveltime+tstudytime+tfailures+schoolsup+famsup+paid+activities+nursery+higher+internet+romantic+tfamrel+tfreetime+tgoout+tDalc+tWalc+thealth+tabsences+tG1+tG2, data = student_data)
+lamy<-invResPlot(transy, lambda=c(-1,-1/2,-1/3,-1/4,0,1/4,1/3,1/2,1))
+lamy$lambda
+plot(lamy$RSS~lamy$lambda)
+iG3 <- student_data$G3^(2.019768)
+
+inverse_res_model<-lm(iG3~school+sex+tage+address+famsize+Pstatus+Medu+Fedu+Mjob+Fjob+reason+guardian+ttraveltime+tstudytime+tfailures+schoolsup+famsup+paid+activities+nursery+higher+internet+romantic+tfamrel+tfreetime+tgoout+tDalc+tWalc+thealth+tabsences+tG1+tG2, data = student_data)
+summary(inverse_res_model)
+plot(inverse_res_model)
 
 # how many observations are in the dataset
 nrow(student_data)

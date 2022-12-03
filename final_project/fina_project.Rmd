@@ -5,6 +5,36 @@ date: "2022-11-17"
 output: html_document
 ---
 
+```{r, echo=FALSE}
+#set the working directory to the current directory 
+setwd('/Users/cindydunn/Desktop/Grad_School/Math_550')
+
+#print the working directory
+# getwd()
+#print everything in the working directory
+# list.files()
+
+# read in data from csv
+math_course =read.table("final_project/student/student-mat.csv",sep=";",header=TRUE)
+portuguese_course =read.table("final_project/student/student-por.csv",sep=";",header=TRUE)
+
+#combine the two data sets
+student_data = rbind(math_course,portuguese_course)
+
+#remove the datasets that are not needed
+rm(math_course)
+rm(portuguese_course)
+
+# Scale response and predictors with zeros by 1
+student_data$G3=(student_data$G3 + 1)
+student_data$G2=(student_data$G2 + 1)
+student_data$G1=(student_data$G1 + 1)
+student_data$absences=(student_data$absences + 1)
+student_data$failures=(student_data$failures + 1)
+student_data$Medu=(student_data$Medu + 1)
+student_data$Fedu=(student_data$Fedu + 1)
+```
+
 # Table of Contents
 
 1. [Introduction](#introduction)<br>
@@ -32,11 +62,73 @@ Several approaches will be conducted on the data to generate the best possible m
 3. [Variable Selection](#variable-selection)<br>
 <br>
 
+## Inital model
+(nw)
+``` {r, echo=FALSE}
+# naomi echo=false makes code not show in output
+# Initial model
+ilm<-lm(G3 ~., data = student_data)
+par(mfrow=c(2,2))
+plot(ilm)
+```
+
 ## Boxcox transformation
 (nw)
+hello world
+```{r, echo=FALSE}
+#example of how to show a chat so you can talk about distribution of variables and why we changed things
+dage<-density(student_data$failures)
+par(mfrow=c(2,2))
+plot(dage)
+qqnorm(student_data$age, pch = 1, frame = FALSE)
+qqline(student_data$age, col = "steelblue", lwd = 2)
+boxplot(student_data$age, data=student_data, main="data",ylab="G3"  )
 
+```
+hello world
+
+```{r, echo=FALSE}
+library(car)
+
+pc<-powerTransform(cbind(student_data$age, student_data$Medu, student_data$Fedu, student_data$traveltime, student_data$studytime, student_data$failures, student_data$famrel, student_data$freetime, student_data$goout, student_data$Dalc, student_data$Walc, student_data$health, student_data$absences,student_data$G1, student_data$G2, student_data$G3)~1)
+
+# Transform numeric predictors
+tage<-student_data$age^(-1)
+tFedu<-student_data$Fedu^(0.67)
+ttraveltime<-student_data$traveltime^(-1.66)
+tstudytime<-log(student_data$studytime)
+tfailures<-student_data$failures^(-6.22)
+tfamrel<-student_data$famrel^(2)
+tfreetime<-student_data$freetime^(1)
+tgoout<-student_data$goout^(1)
+tDalc<-student_data$Dalc^(-2.69)
+tWalc<-log(student_data$Walc)
+thealth<-student_data$health^(1.33)
+tabsences<-student_data$absences^(-0.09)
+tG1<-student_data$G1^(1.43)
+tG2<-student_data$G2^(1.82)
+tG3<-student_data$G3^(2)
+
+# Check model with transformed predictors and response
+tlm<-lm(tG3~school+sex+tage+address+famsize+Pstatus+Medu+Fedu+Mjob+Fjob+reason+guardian+ttraveltime+tstudytime+tfailures+schoolsup+famsup+paid+activities+nursery+higher+internet+romantic+tfamrel+tfreetime+tgoout+tDalc+tWalc+thealth+tabsences+tG1+tG2, data = student_data)
+par(mfrow=c(2,2))
+plot(tlm)
+```
+ hello wrolds 
+ 
 ## Inverse transformation
 (nw)
+
+```{r, echo=FALSE}
+# Inverse response method using transformed predictors
+transy<-lm(G3~school+sex+tage+address+famsize+Pstatus+Medu+Fedu+Mjob+Fjob+reason+guardian+ttraveltime+tstudytime+tfailures+schoolsup+famsup+paid+activities+nursery+higher+internet+romantic+tfamrel+tfreetime+tgoout+tDalc+tWalc+thealth+tabsences+tG1+tG2, data = student_data)
+lamy<-invResPlot(transy, lambda=c(-1,-1/2,-1/3,-1/4,0,1/4,1/3,1/2,1))
+iG3 <- student_data$G3^(2.019768)
+
+inverse_res_model<-lm(iG3~school+sex+tage+address+famsize+Pstatus+Medu+Fedu+Mjob+Fjob+reason+guardian+ttraveltime+tstudytime+tfailures+schoolsup+famsup+paid+activities+nursery+higher+internet+romantic+tfamrel+tfreetime+tgoout+tDalc+tWalc+thealth+tabsences+tG1+tG2, data = student_data)
+par(mfrow=c(2,2))
+plot(inverse_res_model)
+```
 
 ## Variable Selection
 
@@ -60,9 +152,6 @@ student_data = rbind(math_course,portuguese_course)
 #remove the datasets that are not needed
 rm(math_course)
 rm(portuguese_course)
-
-# remove the column "G1" and "G2" from the dataset
-student_data = student_data[, -which(names(student_data) %in% c("G1"))]
 
 # for chapter 5 we handled data like this go compare. 
 
